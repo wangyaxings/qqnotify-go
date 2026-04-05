@@ -65,3 +65,38 @@ func TestHandlerRespondsToHealthCheck(t *testing.T) {
 		t.Fatalf("expected 200 for health check, got %d", rec.Code)
 	}
 }
+
+func TestHandlerRequiresBearerTokenWhenConfigured(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandlerWithConfig(sender, Config{
+		AuthToken: "secret-token",
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{"title":"任务完成","body":"构建成功"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 without token, got %d", rec.Code)
+	}
+}
+
+func TestHandlerAcceptsBearerTokenWhenConfigured(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandlerWithConfig(sender, Config{
+		AuthToken: "secret-token",
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{"title":"任务完成","body":"构建成功"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer secret-token")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 with valid token, got %d", rec.Code)
+	}
+}

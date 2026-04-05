@@ -10,10 +10,18 @@ import (
 
 type Handler struct {
 	sender qqnotify.Sender
+	cfg    Config
 }
 
 func NewHandler(sender qqnotify.Sender) http.Handler {
-	return &Handler{sender: sender}
+	return NewHandlerWithConfig(sender, Config{})
+}
+
+func NewHandlerWithConfig(sender qqnotify.Sender, cfg Config) http.Handler {
+	return &Handler{
+		sender: sender,
+		cfg:    cfg,
+	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +37,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"error": "method not allowed",
 		})
 		return
+	}
+
+	if token := strings.TrimSpace(h.cfg.AuthToken); token != "" {
+		if r.Header.Get("Authorization") != "Bearer "+token {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"error": "unauthorized",
+			})
+			return
+		}
 	}
 
 	var payload qqnotify.Notification

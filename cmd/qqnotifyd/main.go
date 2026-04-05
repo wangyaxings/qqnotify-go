@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/wangyaxings/qqnotify-go/internal/httpbridge"
@@ -16,15 +15,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
+	bridgeCfg := httpbridge.LoadConfigFromEnv()
 	client := qqnotify.NewClient(cfg, &http.Client{Timeout: 15 * time.Second})
-	addr := ":" + port
-	log.Printf("qqnotifyd listening on http://localhost%s", addr)
-	if err := http.ListenAndServe(addr, httpbridge.NewHandler(client)); err != nil {
+	log.Printf("qqnotifyd listening on http://localhost%s", bridgeCfg.ListenAddr)
+	if bridgeCfg.AuthToken != "" {
+		log.Print("qqnotifyd auth is enabled for /notify")
+	}
+	if err := http.ListenAndServe(bridgeCfg.ListenAddr, httpbridge.NewHandlerWithConfig(client, bridgeCfg)); err != nil {
 		log.Fatal(err)
 	}
 }

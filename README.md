@@ -81,7 +81,9 @@ Optional:
 
 - `QQ_BOT_TOKEN_BASE_URL`
 - `QQ_BOT_API_BASE_URL`
-- `PORT` for `qqnotifyd`
+- `QQNOTIFY_LISTEN_ADDR` for `qqnotifyd` listen address
+- `QQNOTIFY_AUTH_TOKEN` for optional Bearer token auth on `/notify`
+- `PORT` as a compatibility fallback for `qqnotifyd`
 
 ## Client Options
 
@@ -112,6 +114,8 @@ Start the HTTP bridge:
 $env:QQ_APP_ID="your-app-id"
 $env:QQ_APP_SECRET="your-app-secret"
 $env:QQ_USER_OPENID="your-user-openid"
+$env:QQNOTIFY_LISTEN_ADDR=":8080"
+$env:QQNOTIFY_AUTH_TOKEN="your-bridge-token"
 go run ./cmd/qqnotifyd
 ```
 
@@ -119,6 +123,7 @@ Then call it:
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/notify `
+  -Headers @{ Authorization = "Bearer your-bridge-token" } `
   -ContentType 'application/json' `
   -Body '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
 ```
@@ -127,6 +132,7 @@ Or with `curl`:
 
 ```bash
 curl -X POST http://127.0.0.1:8080/notify \
+  -H "Authorization: Bearer your-bridge-token" \
   -H "Content-Type: application/json" \
   -d '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
 ```
@@ -175,6 +181,13 @@ The repository follows semantic versioning.
 - `v1.x`: stable public API with backward-compatible minor releases
 
 The first public milestone for the repository is `v0.1.0`.
+
+## HTTP Bridge Deployment Notes
+
+- `GET /healthz` is always open for liveness probes
+- `POST /notify` can be protected with `QQNOTIFY_AUTH_TOKEN`
+- `QQNOTIFY_LISTEN_ADDR` is the preferred listen setting
+- `PORT` remains supported as a fallback for simple hosting environments
 
 ## Scope
 
