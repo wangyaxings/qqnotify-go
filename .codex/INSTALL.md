@@ -90,6 +90,8 @@
 
 在进入步骤 `1/5` 之前，先检查当前是否已经位于 `qqnotify-go` 仓库根目录。
 
+后续所有 `go run`、`go test` 或其他依赖仓库文件结构的命令，在执行前也都必须再次确保当前终端已经位于 `qqnotify-go` 仓库根目录。
+
 至少检查下面这些路径或等价标志是否存在：
 
 - `go.mod`
@@ -114,6 +116,12 @@ git clone https://github.com/wangyaxings/qqnotify-go.git
 cd ./qqnotify-go
 ```
 
+如果仓库已经存在但当前终端还停留在父目录，也必须先执行：
+
+```powershell
+cd ./qqnotify-go
+```
+
 只有当前工作区准备好之后，才能进入正式步骤。
 
 ---
@@ -129,6 +137,7 @@ cd ./qqnotify-go
 - `go.mod`
 - `./cmd/qqnotify-openid`
 - `./examples/smoke`
+- 当前终端是否已经实际进入 `qqnotify-go` 仓库根目录
 
 ## 如果检查失败
 
@@ -347,8 +356,11 @@ QQ_USER_OPENID=
 默认使用：
 
 ```powershell
+cd ./qqnotify-go
 go run ./cmd/qqnotify-openid
 ```
+
+如果 AI 已确认当前就在仓库根目录，也可以省略重复的 `cd`，但不能在父目录直接执行 `go run`。
 
 ## AI 必须验证的不是“命令启动”，而是“程序正在监听”
 
@@ -458,8 +470,11 @@ QQ_USER_OPENID=你的UserOpenID
 ## 运行命令
 
 ```powershell
+cd ./qqnotify-go
 go run ./examples/smoke
 ```
+
+如果 AI 已确认当前就在仓库根目录，也可以省略重复的 `cd`，但不能在父目录直接执行 `go run`。
 
 ## AI 必须做的事
 
