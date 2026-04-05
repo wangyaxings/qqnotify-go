@@ -35,6 +35,9 @@ func (r notifyRequest) BuildNotification() (qqnotify.Notification, error) {
 			TraceID: strings.TrimSpace(r.TraceID),
 		}, nil
 	case "codex":
+		if strings.TrimSpace(r.Task) == "" {
+			return qqnotify.Notification{}, fmt.Errorf("task is required for codex notifications")
+		}
 		return qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
 			Task:    strings.TrimSpace(r.Task),
 			Summary: strings.TrimSpace(r.Summary),
@@ -43,6 +46,9 @@ func (r notifyRequest) BuildNotification() (qqnotify.Notification, error) {
 			Files:   r.Files,
 		}), nil
 	case "ci":
+		if strings.TrimSpace(r.Workflow) == "" {
+			return qqnotify.Notification{}, fmt.Errorf("workflow is required for ci notifications")
+		}
 		return qqnotify.NewCINotification(qqnotify.CITemplate{
 			Workflow: strings.TrimSpace(r.Workflow),
 			Job:      strings.TrimSpace(r.Job),
@@ -52,6 +58,9 @@ func (r notifyRequest) BuildNotification() (qqnotify.Notification, error) {
 			TraceID:  strings.TrimSpace(r.TraceID),
 		}), nil
 	case "cron":
+		if strings.TrimSpace(r.Name) == "" {
+			return qqnotify.Notification{}, fmt.Errorf("name is required for cron notifications")
+		}
 		return qqnotify.NewCronNotification(qqnotify.CronTemplate{
 			Name:      strings.TrimSpace(r.Name),
 			Status:    strings.TrimSpace(r.Status),

@@ -168,6 +168,12 @@ The HTTP bridge supports the same common templates through JSON payloads:
 - `type: "ci"`
 - `type: "cron"`
 
+Required template fields:
+
+- `codex`: `task`
+- `ci`: `workflow`
+- `cron`: `name`
+
 ## Project Layout
 
 ```text

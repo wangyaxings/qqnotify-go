@@ -50,6 +50,12 @@ Supported template types:
 - `ci`
 - `cron`
 
+Required fields by template:
+
+- `codex`: `task`
+- `ci`: `workflow`
+- `cron`: `name`
+
 Supported fields:
 
 - `title`

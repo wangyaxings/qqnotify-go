@@ -3,6 +3,7 @@ package httpbridge
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -210,5 +211,72 @@ func TestHandlerBuildsCronTemplatePayload(t *testing.T) {
 		if !strings.Contains(sender.lastText, want) {
 			t.Fatalf("expected rendered text to contain %q, got %q", want, sender.lastText)
 		}
+	}
+}
+
+func TestHandlerRejectsCodexTemplateWithoutTask(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{
+		"type":"codex",
+		"summary":"All tests passed."
+	}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing codex task, got %d", rec.Code)
+	}
+	body, _ := io.ReadAll(rec.Body)
+	if !strings.Contains(string(body), "task is required for codex notifications") {
+		t.Fatalf("expected actionable error, got %q", string(body))
+	}
+}
+
+func TestHandlerRejectsCITemplateWithoutWorkflow(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{
+		"type":"ci",
+		"job":"build-linux",
+		"summary":"Unit tests failed."
+	}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing ci workflow, got %d", rec.Code)
+	}
+	body, _ := io.ReadAll(rec.Body)
+	if !strings.Contains(string(body), "workflow is required for ci notifications") {
+		t.Fatalf("expected actionable error, got %q", string(body))
+	}
+}
+
+func TestHandlerRejectsCronTemplateWithoutName(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{
+		"type":"cron",
+		"summary":"The report was generated successfully."
+	}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing cron name, got %d", rec.Code)
+	}
+	body, _ := io.ReadAll(rec.Body)
+	if !strings.Contains(string(body), "name is required for cron notifications") {
+		t.Fatalf("expected actionable error, got %q", string(body))
 	}
 }
