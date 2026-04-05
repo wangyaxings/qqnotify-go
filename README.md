@@ -4,8 +4,26 @@ A production-ready Go middleware for sending AI and automation notifications to 
 
 `qqnotify-go` is built for developers who want the fastest way to deliver results from Codex, AI agents, cron jobs, CI/CD pipelines, and internal tools to QQ.
 
+中文说明：
+
+- [README.zh-CN.md](./README.zh-CN.md)
+
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)
+
+## 中文简介
+
+`qqnotify-go` 是一个面向 AI 服务与自动化任务的 QQ 通知中间件，目标是让 Go 程序、Codex、CI/CD、定时任务和内部工具，以尽量少的配置把结果稳定发送到 QQ。
+
+当前仓库已经支持：
+
+- Go 客户端直接发消息
+- 可复用模板：Codex / CI / cron
+- 非 Go 系统通过 `qqnotifyd` HTTP bridge 调用
+- bridge 可选 Bearer Token 鉴权
+- `GET /healthz` 探活接口
+
+如果你更习惯中文说明，可以直接阅读 [README.zh-CN.md](./README.zh-CN.md)。
 
 ## Why qqnotify-go
 
@@ -191,7 +209,7 @@ docs/                  Specs and plans
 | --- | --- |
 | Codex task result | [examples/codex/main.go](./examples/codex/main.go) |
 | Cron / scheduled job | [examples/cron/main.go](./examples/cron/main.go) |
-| GitHub Actions / CI | [examples/github-actions/main.go](./examples/github-actions/main.go), [examples/github-actions/README.md](./examples/github-actions/README.md) |
+| GitHub Actions / CI | [examples/github-actions/main.go](./examples/github-actions/main.go), [examples/github-actions/workflow.yml](./examples/github-actions/workflow.yml), [examples/github-actions/README.md](./examples/github-actions/README.md) |
 | HTTP bridge | [examples/http-bridge/README.md](./examples/http-bridge/README.md) |
 
 ## Versioning
