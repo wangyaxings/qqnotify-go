@@ -5,6 +5,7 @@ A production-ready Go middleware for sending AI and automation notifications to 
 `qqnotify-go` is built for developers who want the fastest way to deliver results from Codex, AI agents, cron jobs, CI/CD pipelines, and internal tools to QQ.
 
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)
 
 ## Why qqnotify-go
 
@@ -41,17 +42,23 @@ func main() {
     ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
     defer cancel()
 
-    err = client.Send(ctx, qqnotify.Notification{
-        Title:   "Codex task finished",
-        Body:    "All tests passed and the patch is ready.",
+    err = client.Send(ctx, qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
+        Task:    "Refactor notification bridge",
+        Summary: "All tests passed and the patch is ready.",
         Status:  "success",
-        Source:  "codex",
         TraceID: "job-123",
-    })
+        Files:   []string{"internal/httpbridge/handler.go", "README.md"},
+    }))
     if err != nil {
         log.Fatal(err)
     }
 }
+```
+
+## Installation
+
+```bash
+go get github.com/wangyaxings/qqnotify-go/qqnotify@latest
 ```
 
 ## Supported Use Cases
@@ -130,6 +137,16 @@ Health check:
 Invoke-RestMethod -Method Get -Uri http://127.0.0.1:8080/healthz
 ```
 
+## Reusable Templates
+
+`qqnotify-go` includes reusable templates for common automation workflows:
+
+- `qqnotify.NewCodexNotification`
+- `qqnotify.NewCINotification`
+- `qqnotify.NewCronNotification`
+
+This lets callers avoid handcrafting titles and multiline bodies for the most common notification types.
+
 ## Project Layout
 
 ```text
@@ -143,10 +160,21 @@ docs/                  Specs and plans
 
 ## Examples
 
-- [Codex example](./examples/codex/main.go)
-- [Cron example](./examples/cron/main.go)
-- [GitHub Actions example](./examples/github-actions/README.md)
-- [HTTP bridge example](./examples/http-bridge/README.md)
+| Scenario | Files |
+| --- | --- |
+| Codex task result | [examples/codex/main.go](./examples/codex/main.go) |
+| Cron / scheduled job | [examples/cron/main.go](./examples/cron/main.go) |
+| GitHub Actions / CI | [examples/github-actions/main.go](./examples/github-actions/main.go), [examples/github-actions/README.md](./examples/github-actions/README.md) |
+| HTTP bridge | [examples/http-bridge/README.md](./examples/http-bridge/README.md) |
+
+## Versioning
+
+The repository follows semantic versioning.
+
+- `v0.x`: fast-moving pre-1.0 releases while the API is being shaped
+- `v1.x`: stable public API with backward-compatible minor releases
+
+The first public milestone for the repository is `v0.1.0`.
 
 ## Scope
 

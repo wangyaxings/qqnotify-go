@@ -18,14 +18,14 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	if err := client.Send(ctx, qqnotify.Notification{
-		Title:     "Daily report generated",
-		Body:      "The scheduled data sync completed successfully.",
+	if err := client.Send(ctx, qqnotify.NewCronNotification(qqnotify.CronTemplate{
+		Name:      "daily-report",
 		Status:    "success",
-		Source:    "cron",
+		Summary:   "The scheduled data sync completed successfully.",
+		Scheduled: "0 9 * * *",
 		TraceID:   "cron-daily-001",
 		Timestamp: time.Now(),
-	}); err != nil {
+	})); err != nil {
 		log.Fatal(err)
 	}
 }

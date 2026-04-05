@@ -18,15 +18,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	if err := client.Send(ctx, qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
-		Task:    "Refactor notification bridge",
-		Summary: "Patch generated and verification completed.",
-		Status:  "success",
-		TraceID: "codex-run-001",
-		Files: []string{
-			"internal/httpbridge/handler.go",
-			"README.md",
-		},
+	if err := client.Send(ctx, qqnotify.NewCINotification(qqnotify.CITemplate{
+		Workflow:  "release",
+		Job:       "build-linux",
+		Status:    "failed",
+		Summary:   "Unit tests failed in package qqnotify.",
+		RunURL:    "https://github.com/wangyaxings/qqnotify-go/actions/runs/123",
+		TraceID:   "run-123",
 		Timestamp: time.Now(),
 	})); err != nil {
 		log.Fatal(err)
