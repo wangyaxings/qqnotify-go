@@ -203,6 +203,11 @@ The repository follows semantic versioning.
 
 The first public milestone for the repository is `v0.1.0`.
 
+See also:
+
+- [CHANGELOG.md](./CHANGELOG.md)
+- [v0.1.0 release notes](./docs/releases/v0.1.0.md)
+
 ## HTTP Bridge Deployment Notes
 
 - `GET /healthz` is always open for liveness probes
