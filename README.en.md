@@ -4,69 +4,46 @@
 
 A QQ notification middleware for AI and automation workflows.
 
-`qqnotify-go` helps Go apps, Codex, Cursor, CI/CD jobs, cron tasks, and internal tools send results to QQ with minimal setup.
+`qqnotify-go` helps Go apps, AI assistants, CI/CD jobs, cron tasks, and internal tools send results to QQ with minimal setup.
 
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)
 
 ## Installation
 
-```bash
-go get github.com/wangyaxings/qqnotify-go/qqnotify@latest
-```
-
-## Tell Codex
+Ask your AI assistant to fetch and follow the install guide:
 
 ```text
-Read ./docs/ai/quickstart.zh-CN.md and guide me step by step until qqnotify-go sends a real smoke-test message to QQ.
-
-Help me obtain and confirm:
-- QQ_APP_ID
-- QQ_APP_SECRET
-- QQ_USER_OPENID
-
-Capture QQ_USER_OPENID by running:
-go run ./cmd/qqnotify-openid
-
-Then save all three values into ./examples/smoke/.env.local and run:
-go run ./examples/smoke
-
-Do not skip steps. Pause for confirmation after each milestone.
+Fetch and follow instructions from https://raw.githubusercontent.com/wangyaxings/qqnotify-go/refs/heads/main/.codex/INSTALL.md
 ```
 
-## Quick Start
+The same guide is available in this repository:
 
-1. Copy the smoke config template:
+- [`.codex/INSTALL.md`](./.codex/INSTALL.md)
 
-```bash
-cp ./examples/smoke/smoke.env.example ./examples/smoke/.env.local
-```
+## Usage
 
-2. Follow the Chinese setup guide to obtain and fill:
-
-- `QQ_APP_ID`
-- `QQ_APP_SECRET`
-- `QQ_USER_OPENID`
-
-Guide:
-
-- [docs/ai/quickstart.zh-CN.md](./docs/ai/quickstart.zh-CN.md)
-
-3. Run the smoke example:
-
-```bash
+```powershell
+$env:QQ_APP_ID="your-app-id"
+$env:QQ_APP_SECRET="your-app-secret"
+$env:QQ_USER_OPENID="your-user-openid"
 go run ./examples/smoke
 ```
 
-## Common Usage
+Use the Go client directly:
 
-- Go client: `qqnotify.NewClient(...)`
-- Reusable templates: Codex / CI / cron
-- HTTP bridge: `go run ./cmd/qqnotifyd`
+```go
+client := qqnotify.NewClient(cfg, nil)
+err := client.Send(ctx, qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
+    Task:    "Refactor notification bridge",
+    Summary: "All tests passed.",
+    Status:  "success",
+}))
+```
 
 ## Docs
 
-- [Chinese quickstart guide](./docs/ai/quickstart.zh-CN.md)
+- [Full install guide](./.codex/INSTALL.md)
 - [Smoke example guide](./examples/smoke/README.md)
 - [GitHub Actions example](./examples/github-actions/workflow.yml)
 - [HTTP bridge example](./examples/http-bridge/README.md)
