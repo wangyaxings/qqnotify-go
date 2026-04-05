@@ -14,7 +14,7 @@ Fill in:
 
 - `QQ_APP_ID`
 - `QQ_APP_SECRET`
-- `QQ_USER_OPENID`
+- leave `QQ_USER_OPENID` empty until you capture the real value
 
 ## Get QQ_USER_OPENID
 

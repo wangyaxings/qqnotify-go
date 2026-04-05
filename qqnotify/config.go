@@ -20,6 +20,14 @@ type Config struct {
 }
 
 func LoadConfigFromEnv() (Config, error) {
+	return loadConfigFromEnv(true)
+}
+
+func LoadCaptureConfigFromEnv() (Config, error) {
+	return loadConfigFromEnv(false)
+}
+
+func loadConfigFromEnv(requireUserOpenID bool) (Config, error) {
 	cfg := Config{
 		AppID:        strings.TrimSpace(os.Getenv("QQ_APP_ID")),
 		AppSecret:    strings.TrimSpace(os.Getenv("QQ_APP_SECRET")),
@@ -42,7 +50,7 @@ func LoadConfigFromEnv() (Config, error) {
 	if cfg.AppSecret == "" {
 		missing = append(missing, "QQ_APP_SECRET")
 	}
-	if cfg.UserOpenID == "" {
+	if requireUserOpenID && cfg.UserOpenID == "" {
 		missing = append(missing, "QQ_USER_OPENID")
 	}
 	if len(missing) > 0 {

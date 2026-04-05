@@ -158,3 +158,32 @@ func TestClientSendTextUsesConfiguredRetryAttempts(t *testing.T) {
 		t.Fatalf("expected 3 message attempts, got %d", messageAttempts)
 	}
 }
+
+func TestClientFetchAccessTokenReportsInvalidCredentialsClearly(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if path.Clean(r.URL.Path) != "/app/getAppAccessToken" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":100016,"message":"invalid appid or secret"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{
+		AppID:        "1903697734",
+		AppSecret:    "secret-value",
+		UserOpenID:   "user-openid",
+		TokenBaseURL: server.URL,
+		APIBaseURL:   server.URL,
+	}, server.Client())
+
+	_, err := client.fetchAccessToken(context.Background())
+	if err == nil {
+		t.Fatal("expected invalid credential error")
+	}
+
+	if got := err.Error(); got != "fetch access token: invalid QQ_APP_ID or QQ_APP_SECRET; verify the copied values or regenerate AppSecret if needed" {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}

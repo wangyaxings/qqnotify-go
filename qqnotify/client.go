@@ -41,6 +41,11 @@ type sendMessageRequest struct {
 	MsgType int    `json:"msg_type"`
 }
 
+type tokenErrorResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 func NewClient(cfg Config, httpClient *http.Client) *Client {
 	return NewClientWithOptions(cfg, httpClient, ClientOptions{})
 }
@@ -119,39 +124,64 @@ func (c *Client) SendText(ctx context.Context, text string) error {
 }
 
 func (c *Client) fetchAccessToken(ctx context.Context) (string, error) {
+	return FetchAccessToken(ctx, c.httpClient, c.cfg)
+}
+
+func FetchAccessToken(ctx context.Context, client *http.Client, cfg Config) (string, error) {
+	if client == nil {
+		client = &http.Client{Timeout: defaultHTTPTimeout}
+	}
+
 	payload, err := json.Marshal(map[string]string{
-		"appId":        c.cfg.AppID,
-		"clientSecret": c.cfg.AppSecret,
+		"appId":        cfg.AppID,
+		"clientSecret": cfg.AppSecret,
 	})
 	if err != nil {
 		return "", fmt.Errorf("marshal access token request: %w", err)
 	}
 
-	tokenURL := strings.TrimRight(c.cfg.TokenBaseURL, "/") + "/app/getAppAccessToken"
+	tokenURL := strings.TrimRight(cfg.TokenBaseURL, "/") + "/app/getAppAccessToken"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, bytes.NewReader(payload))
 	if err != nil {
 		return "", fmt.Errorf("build access token request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("fetch access token: %w", err)
 	}
 	defer resp.Body.Close()
 
+	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("fetch access token: unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	var tokenResp accessTokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
 		return "", fmt.Errorf("decode access token response: %w", err)
 	}
 	if tokenResp.AccessToken == "" {
-		return "", errors.New("fetch access token: empty access_token in response")
+		return "", formatTokenResponseError(body)
 	}
 
 	return tokenResp.AccessToken, nil
+}
+
+func formatTokenResponseError(body []byte) error {
+	var apiErr tokenErrorResponse
+	if err := json.Unmarshal(body, &apiErr); err == nil {
+		message := strings.TrimSpace(strings.ToLower(apiErr.Message))
+		if apiErr.Code == 100016 || message == "invalid appid or secret" {
+			return errors.New("fetch access token: invalid QQ_APP_ID or QQ_APP_SECRET; verify the copied values or regenerate AppSecret if needed")
+		}
+	}
+
+	trimmed := strings.TrimSpace(string(body))
+	if trimmed == "" {
+		return errors.New("fetch access token: empty access_token in response")
+	}
+
+	return fmt.Errorf("fetch access token: empty access_token in response: %s", trimmed)
 }

@@ -1,12 +1,10 @@
 package openidcapture
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -119,7 +117,7 @@ func CaptureNextMatchingMessage(ctx context.Context, input <-chan IncomingC2CMes
 }
 
 func CaptureUserOpenID(ctx context.Context, cfg qqnotify.Config) (string, string, error) {
-	accessToken, err := fetchAccessToken(ctx, &http.Client{Timeout: 10 * time.Second}, cfg)
+	accessToken, err := qqnotify.FetchAccessToken(ctx, &http.Client{Timeout: 10 * time.Second}, cfg)
 	if err != nil {
 		return "", "", err
 	}
@@ -229,44 +227,4 @@ func startHeartbeat(ctx context.Context, conn *websocket.Conn, interval time.Dur
 			_ = conn.WriteMessage(websocket.TextMessage, payload)
 		}
 	}
-}
-
-func fetchAccessToken(ctx context.Context, client *http.Client, cfg qqnotify.Config) (string, error) {
-	payload, err := json.Marshal(map[string]string{
-		"appId":        cfg.AppID,
-		"clientSecret": cfg.AppSecret,
-	})
-	if err != nil {
-		return "", fmt.Errorf("marshal access token request: %w", err)
-	}
-
-	tokenURL := strings.TrimRight(cfg.TokenBaseURL, "/") + "/app/getAppAccessToken"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, bytes.NewReader(payload))
-	if err != nil {
-		return "", fmt.Errorf("build access token request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("fetch access token: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("fetch access token: unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("decode access token response: %w", err)
-	}
-	if tokenResp.AccessToken == "" {
-		return "", errors.New("fetch access token: empty access_token in response")
-	}
-
-	return tokenResp.AccessToken, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/wangyaxings/qqnotify-go/internal/openidcapture"
@@ -16,7 +17,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg, err := qqnotify.LoadConfigFromEnv()
+	cfg, err := qqnotify.LoadCaptureConfigFromEnv()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,14 +25,21 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	log.Printf("listening for a fresh QQ direct message using %s", usedPath)
-	log.Print("send a new message to the bot from the QQ account you want to bind")
-
-	openID, content, err := openidcapture.CaptureUserOpenID(ctx, cfg)
+	accessToken, err := qqnotify.FetchAccessToken(ctx, &http.Client{Timeout: 10 * time.Second}, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("QQ_USER_OPENID=%s", openID)
-	log.Printf("last_message=%s", content)
+	log.Printf("listening for a fresh QQ direct message using %s", usedPath)
+	log.Print("send a new message to the bot from the QQ account you want to bind")
+
+	msg, err := openidcapture.CaptureSingleMessage(ctx, accessToken, func(openidcapture.IncomingC2CMessage) bool {
+		return true
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("QQ_USER_OPENID=%s", msg.UserOpenID)
+	log.Printf("last_message=%s", msg.Content)
 }

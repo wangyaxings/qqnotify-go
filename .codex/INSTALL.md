@@ -302,6 +302,8 @@ QQ_USER_OPENID=
 - `./examples/smoke/.env.local` 是本次流程唯一使用的冒烟测试配置文件
 - 后面拿到 `QQ_USER_OPENID` 后，也必须继续写回这个文件
 - 真实值不要提交到 git
+- 写入完成后，必须立刻自动校验一次 `QQ_APP_ID` 和 `QQ_APP_SECRET` 是否能成功换取 access token
+- 如果 access token 校验失败，不要进入 openid 监听，优先明确提示用户重新检查复制内容，尤其注意 `I/l`、`O/0` 这类易混字符
 - 如果用户已经把 `AppSecret` 发到了聊天中，在本步结束时再次提醒：
   - 本次测试完成后建议立即重新生成新的 `AppSecret`
 
@@ -313,6 +315,7 @@ QQ_USER_OPENID=
 - `QQ_APP_ID` 已写入
 - `QQ_APP_SECRET` 已写入
 - `QQ_USER_OPENID` 位置已预留
+- `QQ_APP_ID` 和 `QQ_APP_SECRET` 已通过 access token 校验
 
 ---
 
@@ -337,6 +340,7 @@ QQ_USER_OPENID=
 - `./examples/smoke/.env.local` 已存在
 - `QQ_APP_ID` 已写入
 - `QQ_APP_SECRET` 已写入
+- 这组 `QQ_APP_ID` 和 `QQ_APP_SECRET` 已经成功换取过 access token
 
 ## 启动命令
 
@@ -363,6 +367,17 @@ go run ./cmd/qqnotify-openid
 2. 当前目录是否不是仓库根目录
 3. 代码实现是否把 `QQ_USER_OPENID` 也错误地当成了启动前必填项
 
+如果 access token 返回类似下面的错误：
+
+- `invalid appid or secret`
+
+你必须优先明确告诉用户：
+
+- 当前这组 `QQ_APP_ID` / `QQ_APP_SECRET` 无法通过校验
+- 优先检查是否复制错误，尤其是 `I/l`、`O/0`
+- 如果确认复制无误，则立即重新生成新的 `AppSecret`
+- 在拿到新的 `AppSecret` 前，不要继续要求用户发送测试消息
+
 如果真实代码当前要求 `QQ_USER_OPENID` 非空，导致监听在启动前退出，则你可以：
 
 - 仅在本地临时写入一个占位值到 `./examples/smoke/.env.local`
@@ -386,7 +401,7 @@ openid 监听已启动。
 ---
 下一步
 1. 用目标 QQ 账号给机器人发送一条新的单聊消息，内容填写 `1`
-2. 发送完成后只回复：已发送
+2. 不要回复数字，只回复：已发送
 ```
 
 如果用户还没有进入机器人页面，也可以使用更完整的提示：
@@ -401,7 +416,7 @@ openid 监听已启动。
 下一步
 1. 打开 QQ，进入与该机器人的单聊窗口
 2. 给机器人发送一条新消息，内容填写 `1`
-3. 发送完成后只回复：已发送
+3. 不要回复数字，只回复：已发送
 ```
 
 ## 用户回复“已发送”后
@@ -468,6 +483,16 @@ go run ./examples/smoke
 ---
 请打开 QQ，确认是否已经收到刚才的测试消息。收到后只回复：已收到
 ```
+
+如果用户回复的是数字，例如：
+
+- `1`
+- `2`
+- `3`
+
+你必须把它视为“尚未完成最终确认”，并只做一件事：
+
+- 明确提醒用户不要回复数字，只回复 `已收到` 或 `未收到`
 
 ## 最终完成条件
 

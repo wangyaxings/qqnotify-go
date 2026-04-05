@@ -44,3 +44,26 @@ func TestLoadConfigFromEnvUsesDefaults(t *testing.T) {
 		t.Fatalf("expected default api base url %q, got %q", DefaultAPIBaseURL, cfg.APIBaseURL)
 	}
 }
+
+func TestLoadCaptureConfigFromEnvAllowsMissingUserOpenID(t *testing.T) {
+	t.Setenv("QQ_APP_ID", "1903697734")
+	t.Setenv("QQ_APP_SECRET", "secret-value")
+	t.Setenv("QQ_USER_OPENID", "")
+
+	cfg, err := LoadCaptureConfigFromEnv()
+	if err != nil {
+		t.Fatalf("expected capture config to load, got %v", err)
+	}
+
+	if cfg.AppID != "1903697734" {
+		t.Fatalf("expected app id, got %q", cfg.AppID)
+	}
+
+	if cfg.AppSecret != "secret-value" {
+		t.Fatalf("expected app secret, got %q", cfg.AppSecret)
+	}
+
+	if cfg.UserOpenID != "" {
+		t.Fatalf("expected empty user openid during capture, got %q", cfg.UserOpenID)
+	}
+}
