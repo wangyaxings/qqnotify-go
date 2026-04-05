@@ -1,250 +1,125 @@
+[简体中文](./README.md) | [English](./README.en.md)
+
 # qqnotify-go
 
-A production-ready Go middleware for sending AI and automation notifications to QQ.
+一个面向 AI 服务与自动化任务的 QQ 通知中间件。
 
-`qqnotify-go` is built for developers who want the fastest way to deliver results from Codex, AI agents, cron jobs, CI/CD pipelines, and internal tools to QQ.
-
-中文说明：
-
-- [README.zh-CN.md](./README.zh-CN.md)
+`qqnotify-go` 用来帮助 Go 程序、Codex、Cursor、CI/CD、定时任务和内部工具，以较低心智负担把结果稳定发送到 QQ。
 
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)
 
-## 中文简介
-
-`qqnotify-go` 是一个面向 AI 服务与自动化任务的 QQ 通知中间件，目标是让 Go 程序、Codex、CI/CD、定时任务和内部工具，以尽量少的配置把结果稳定发送到 QQ。
-
-当前仓库已经支持：
-
-- Go 客户端直接发消息
-- 可复用模板：Codex / CI / cron
-- 非 Go 系统通过 `qqnotifyd` HTTP bridge 调用
-- bridge 可选 Bearer Token 鉴权
-- `GET /healthz` 探活接口
-
-如果你更习惯中文说明，可以直接阅读 [README.zh-CN.md](./README.zh-CN.md)。
-
-## Why qqnotify-go
-
-- Minimal setup to send the first message
-- Clean Go API for apps and services
-- Lightweight HTTP bridge for non-Go callers
-- Production-friendly defaults for timeout and transport handling
-- Retries transient upstream failures when sending messages
-- Designed for AI and automation scenarios instead of generic bot framework complexity
-
-## Quick Example
-
-```go
-package main
-
-import (
-    "context"
-    "log"
-    "time"
-
-    "github.com/wangyaxings/qqnotify-go/qqnotify"
-)
-
-func main() {
-    cfg, err := qqnotify.LoadConfigFromEnv()
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    client := qqnotify.NewClientWithOptions(cfg, nil, qqnotify.ClientOptions{
-        RetryAttempts: 3,
-        Timeout:       20 * time.Second,
-    })
-    ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-    defer cancel()
-
-    err = client.Send(ctx, qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
-        Task:    "Refactor notification bridge",
-        Summary: "All tests passed and the patch is ready.",
-        Status:  "success",
-        TraceID: "job-123",
-        Files:   []string{"internal/httpbridge/handler.go", "README.md"},
-    }))
-    if err != nil {
-        log.Fatal(err)
-    }
-}
-```
-
-## Installation
+## 安装
 
 ```bash
 go get github.com/wangyaxings/qqnotify-go/qqnotify@latest
 ```
 
-## Supported Use Cases
+## Tell Codex
 
-- Codex task completion notifications
-- AI agent execution updates
-- Cron job reports
-- GitHub Actions or CI failure alerts
-- Internal tools and operational notifications
+把下面这段话直接发给 Codex：
 
-## Environment Variables
+```text
+Read ./docs/ai/quickstart.zh-CN.md and act as a step-by-step setup assistant for qqnotify-go.
 
-Required:
+Guide me through the full QQ setup flow:
+1. Open the QQ bot platform pages
+2. Log in by scanning the QR code
+3. Find or create the bot
+4. Obtain QQ_APP_ID
+5. Generate QQ_APP_SECRET
+6. Capture QQ_USER_OPENID by running go run ./cmd/qqnotify-openid
+7. Save all three values into ./examples/smoke/.env.local
+8. Run the smoke example and verify that QQ receives the message
+
+Do not skip steps.
+Do not assume values.
+After each major step, ask me to confirm before continuing.
+Only finish after I have confirmed all three values and the smoke example has sent a real QQ message successfully.
+```
+
+## Tell Cursor
+
+把下面这段话直接发给 Cursor：
+
+```text
+Open this repository and follow ./docs/ai/quickstart.zh-CN.md as a strict setup checklist.
+
+Your job is to guide me step by step until qqnotify-go successfully sends a real smoke-test message to QQ.
+Make me obtain and confirm these three values first:
+- QQ_APP_ID
+- QQ_APP_SECRET
+- QQ_USER_OPENID
+
+Then store them in ./examples/smoke/.env.local and run the smoke example.
+Do not skip steps, and pause for my confirmation after each milestone.
+```
+
+## Tell AI
+
+如果你使用其他 AI，可以直接发这段话：
+
+```text
+Please act as a setup guide for qqnotify-go by following the repository document ./docs/ai/quickstart.zh-CN.md.
+
+Guide me from opening the QQ bot platform and logging in, all the way to collecting QQ_APP_ID, QQ_APP_SECRET, and QQ_USER_OPENID, saving them into ./examples/smoke/.env.local, and running the smoke example successfully.
+
+You must work step by step.
+You must wait for my confirmation after each major step.
+You must not finish until all three values are confirmed and QQ has received the smoke-test message.
+```
+
+## 最快启动
+
+1. 复制示例配置文件
+
+```powershell
+Copy-Item ./examples/smoke/smoke.env.example ./examples/smoke/.env.local
+```
+
+2. 按照 [AI 快速启动文档](./docs/ai/quickstart.zh-CN.md) 获取并填写：
 
 - `QQ_APP_ID`
 - `QQ_APP_SECRET`
 - `QQ_USER_OPENID`
 
-Optional:
-
-- `QQ_BOT_TOKEN_BASE_URL`
-- `QQ_BOT_API_BASE_URL`
-- `QQNOTIFY_LISTEN_ADDR` for `qqnotifyd` listen address
-- `QQNOTIFY_AUTH_TOKEN` for optional Bearer token auth on `/notify`
-- `PORT` as a compatibility fallback for `qqnotifyd`
-
-## Client Options
-
-Use `qqnotify.NewClientWithOptions` when you want to override default behavior:
-
-- `RetryAttempts`: number of send retries for transient 5xx upstream failures
-- `Timeout`: default HTTP client timeout used when `nil` client is provided
-
-Defaults:
-
-- `RetryAttempts = 2`
-- `Timeout = 10s`
-
-## Quick Start
-
-Send a first message from Go:
+3. 运行冒烟测试
 
 ```powershell
-$env:QQ_APP_ID="your-app-id"
-$env:QQ_APP_SECRET="your-app-secret"
-$env:QQ_USER_OPENID="your-user-openid"
-go run ./cmd/example-send
+go run ./examples/smoke
 ```
 
-Start the HTTP bridge:
+如果成功：
+
+- 终端会输出发送成功
+- 你的 QQ 会收到一条 `qqnotify-go` 的测试消息
+
+## 常用方式
+
+Go 代码直接发送：
+
+```go
+client := qqnotify.NewClient(cfg, nil)
+err := client.Send(ctx, qqnotify.NewCodexNotification(qqnotify.CodexTemplate{
+    Task:    "Refactor notification bridge",
+    Summary: "All tests passed.",
+    Status:  "success",
+}))
+```
+
+HTTP bridge：
 
 ```powershell
-$env:QQ_APP_ID="your-app-id"
-$env:QQ_APP_SECRET="your-app-secret"
-$env:QQ_USER_OPENID="your-user-openid"
 $env:QQNOTIFY_LISTEN_ADDR=":8080"
 $env:QQNOTIFY_AUTH_TOKEN="your-bridge-token"
 go run ./cmd/qqnotifyd
 ```
 
-Then call it:
+## 文档
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/notify `
-  -Headers @{ Authorization = "Bearer your-bridge-token" } `
-  -ContentType 'application/json' `
-  -Body '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
-```
-
-Or with `curl`:
-
-```bash
-curl -X POST http://127.0.0.1:8080/notify \
-  -H "Authorization: Bearer your-bridge-token" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
-```
-
-Template-aware bridge payloads are also supported:
-
-```bash
-curl -X POST http://127.0.0.1:8080/notify \
-  -H "Authorization: Bearer your-bridge-token" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"codex","task":"Refactor bridge auth","summary":"All tests passed.","status":"success","files":["internal/httpbridge/handler.go","README.md"]}'
-```
-
-Health check:
-
-```powershell
-Invoke-RestMethod -Method Get -Uri http://127.0.0.1:8080/healthz
-```
-
-## Reusable Templates
-
-`qqnotify-go` includes reusable templates for common automation workflows:
-
-- `qqnotify.NewCodexNotification`
-- `qqnotify.NewCINotification`
-- `qqnotify.NewCronNotification`
-
-This lets callers avoid handcrafting titles and multiline bodies for the most common notification types.
-
-The HTTP bridge supports the same common templates through JSON payloads:
-
-- `type: "codex"`
-- `type: "ci"`
-- `type: "cron"`
-
-Required template fields:
-
-- `codex`: `task`
-- `ci`: `workflow`
-- `cron`: `name`
-
-## Project Layout
-
-```text
-cmd/qqnotifyd          HTTP bridge entrypoint
-cmd/example-send       Minimal send demo
-qqnotify/              Public library API
-internal/httpbridge/   HTTP bridge internals
-examples/              Scenario examples
-docs/                  Specs and plans
-```
-
-## Examples
-
-| Scenario | Files |
-| --- | --- |
-| Codex task result | [examples/codex/main.go](./examples/codex/main.go) |
-| Cron / scheduled job | [examples/cron/main.go](./examples/cron/main.go) |
-| GitHub Actions / CI | [examples/github-actions/main.go](./examples/github-actions/main.go), [examples/github-actions/workflow.yml](./examples/github-actions/workflow.yml), [examples/github-actions/README.md](./examples/github-actions/README.md) |
-| HTTP bridge | [examples/http-bridge/README.md](./examples/http-bridge/README.md) |
-
-## Versioning
-
-The repository follows semantic versioning.
-
-- `v0.x`: fast-moving pre-1.0 releases while the API is being shaped
-- `v1.x`: stable public API with backward-compatible minor releases
-
-The first public milestone for the repository is `v0.1.0`.
-
-See also:
-
-- [CHANGELOG.md](./CHANGELOG.md)
-- [v0.1.0 release notes](./docs/releases/v0.1.0.md)
-
-## HTTP Bridge Deployment Notes
-
-- `GET /healthz` is always open for liveness probes
-- `POST /notify` can be protected with `QQNOTIFY_AUTH_TOKEN`
-- `QQNOTIFY_LISTEN_ADDR` is the preferred listen setting
-- `PORT` remains supported as a fallback for simple hosting environments
-
-## Scope
-
-Current focus:
-
-- QQ notification sending
-- AI and automation delivery workflows
-- Reusable middleware API
-
-Not in v1:
-
-- Full bot framework features
-- Two-way chat flows
-- Command routing
-- Session management
-- Plugin system
+- [中文 AI 快速启动](./docs/ai/quickstart.zh-CN.md)
+- [冒烟测试说明](./examples/smoke/README.md)
+- [GitHub Actions 示例](./examples/github-actions/workflow.yml)
+- [HTTP bridge 示例](./examples/http-bridge/README.md)
+- [CHANGELOG](./CHANGELOG.md)
+- [v0.1.0 发布说明](./docs/releases/v0.1.0.md)
