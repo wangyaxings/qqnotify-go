@@ -137,6 +137,15 @@ curl -X POST http://127.0.0.1:8080/notify \
   -d '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
 ```
 
+Template-aware bridge payloads are also supported:
+
+```bash
+curl -X POST http://127.0.0.1:8080/notify \
+  -H "Authorization: Bearer your-bridge-token" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"codex","task":"Refactor bridge auth","summary":"All tests passed.","status":"success","files":["internal/httpbridge/handler.go","README.md"]}'
+```
+
 Health check:
 
 ```powershell
@@ -152,6 +161,12 @@ Invoke-RestMethod -Method Get -Uri http://127.0.0.1:8080/healthz
 - `qqnotify.NewCronNotification`
 
 This lets callers avoid handcrafting titles and multiline bodies for the most common notification types.
+
+The HTTP bridge supports the same common templates through JSON payloads:
+
+- `type: "codex"`
+- `type: "ci"`
+- `type: "cron"`
 
 ## Project Layout
 

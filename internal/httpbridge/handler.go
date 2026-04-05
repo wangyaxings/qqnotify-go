@@ -48,10 +48,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var payload qqnotify.Notification
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req notifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{
 			"error": "invalid json payload",
+		})
+		return
+	}
+
+	payload, err := req.BuildNotification()
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"error": err.Error(),
 		})
 		return
 	}

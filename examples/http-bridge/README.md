@@ -35,6 +35,21 @@ Health check:
 curl http://127.0.0.1:8080/healthz
 ```
 
+Template-aware payloads:
+
+```bash
+curl -X POST http://127.0.0.1:8080/notify \
+  -H "Authorization: Bearer your-bridge-token" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"codex","task":"Refactor bridge auth","summary":"All tests passed.","status":"success","files":["internal/httpbridge/handler.go","README.md"]}'
+```
+
+Supported template types:
+
+- `codex`
+- `ci`
+- `cron`
+
 Supported fields:
 
 - `title`
