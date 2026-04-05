@@ -51,3 +51,17 @@ func TestHandlerRejectsInvalidPayload(t *testing.T) {
 		t.Fatalf("expected 400 bad request, got %d", rec.Code)
 	}
 }
+
+func TestHandlerRespondsToHealthCheck(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 for health check, got %d", rec.Code)
+	}
+}

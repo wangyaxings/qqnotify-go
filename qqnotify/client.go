@@ -21,6 +21,8 @@ type Client struct {
 	httpClient *http.Client
 }
 
+const defaultMessageRetryAttempts = 2
+
 type accessTokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
@@ -72,18 +74,27 @@ func (c *Client) SendText(ctx context.Context, text string) error {
 	req.Header.Set("Authorization", "QQBot "+accessToken)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("send qq notification: %w", err)
-	}
-	defer resp.Body.Close()
+	var lastErr error
+	for attempt := 0; attempt < defaultMessageRetryAttempts; attempt++ {
+		resp, err := c.httpClient.Do(req.Clone(ctx))
+		if err != nil {
+			lastErr = fmt.Errorf("send qq notification: %w", err)
+			continue
+		}
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("send qq notification: unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		_ = resp.Body.Close()
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			return nil
+		}
+
+		lastErr = fmt.Errorf("send qq notification: unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		if resp.StatusCode < 500 {
+			return lastErr
+		}
 	}
 
-	return nil
+	return lastErr
 }
 
 func (c *Client) fetchAccessToken(ctx context.Context) (string, error) {

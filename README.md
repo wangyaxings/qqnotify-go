@@ -10,6 +10,7 @@ A production-ready Go middleware for sending AI and automation notifications to 
 - Clean Go API for apps and services
 - Lightweight HTTP bridge for non-Go callers
 - Production-friendly defaults for timeout and transport handling
+- Retries transient upstream failures when sending messages
 - Designed for AI and automation scenarios instead of generic bot framework complexity
 
 ## Quick Example
@@ -96,6 +97,12 @@ Then call it:
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/notify `
   -ContentType 'application/json' `
   -Body '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
+```
+
+Health check:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri http://127.0.0.1:8080/healthz
 ```
 
 ## Project Layout

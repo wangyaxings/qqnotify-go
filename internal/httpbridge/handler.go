@@ -17,6 +17,13 @@ func NewHandler(sender qqnotify.Sender) http.Handler {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet && r.URL.Path == "/healthz" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": true,
+		})
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
 			"error": "method not allowed",
