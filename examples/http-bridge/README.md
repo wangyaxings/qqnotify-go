@@ -17,6 +17,14 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/notify `
   -Body '{"title":"Deployment finished","body":"Version v1.0.0 is live","status":"success"}'
 ```
 
+With curl:
+
+```bash
+curl -X POST http://127.0.0.1:8080/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Deployment finished","body":"Version v1.0.0 is live","status":"success"}'
+```
+
 Supported fields:
 
 - `title`

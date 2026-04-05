@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"path"
 	"testing"
+	"time"
 )
 
 func TestClientSendTextRequestsAccessTokenAndMessage(t *testing.T) {
@@ -101,5 +102,59 @@ func TestClientSendTextRetriesOnTransientMessageFailure(t *testing.T) {
 	}
 	if messageAttempts != 2 {
 		t.Fatalf("expected 2 message attempts, got %d", messageAttempts)
+	}
+}
+
+func TestNewClientWithOptionsUsesConfiguredTimeout(t *testing.T) {
+	client := NewClientWithOptions(Config{
+		AppID:      "1903697734",
+		AppSecret:  "secret-value",
+		UserOpenID: "user-openid",
+	}, nil, ClientOptions{
+		Timeout: 3 * time.Second,
+	})
+
+	if client.httpClient.Timeout != 3*time.Second {
+		t.Fatalf("expected timeout 3s, got %v", client.httpClient.Timeout)
+	}
+}
+
+func TestClientSendTextUsesConfiguredRetryAttempts(t *testing.T) {
+	messageAttempts := 0
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch path.Clean(r.URL.Path) {
+		case "/app/getAppAccessToken":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"test-access-token","expires_in":7200}`))
+		case "/v2/users/user-openid/messages":
+			messageAttempts++
+			if messageAttempts < 3 {
+				http.Error(w, "temporary upstream error", http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"message-id","timestamp":1743868800}`))
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClientWithOptions(Config{
+		AppID:        "1903697734",
+		AppSecret:    "secret-value",
+		UserOpenID:   "user-openid",
+		TokenBaseURL: server.URL,
+		APIBaseURL:   server.URL,
+	}, server.Client(), ClientOptions{
+		RetryAttempts: 3,
+	})
+
+	if err := client.SendText(context.Background(), "retry me more"); err != nil {
+		t.Fatalf("expected send to succeed after configured retries, got %v", err)
+	}
+	if messageAttempts != 3 {
+		t.Fatalf("expected 3 message attempts, got %d", messageAttempts)
 	}
 }

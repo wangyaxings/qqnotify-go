@@ -19,9 +19,18 @@ type Sender interface {
 type Client struct {
 	cfg        Config
 	httpClient *http.Client
+	options    ClientOptions
 }
 
-const defaultMessageRetryAttempts = 2
+const (
+	defaultMessageRetryAttempts = 2
+	defaultHTTPTimeout          = 10 * time.Second
+)
+
+type ClientOptions struct {
+	RetryAttempts int
+	Timeout       time.Duration
+}
 
 type accessTokenResponse struct {
 	AccessToken string `json:"access_token"`
@@ -33,13 +42,25 @@ type sendMessageRequest struct {
 }
 
 func NewClient(cfg Config, httpClient *http.Client) *Client {
+	return NewClientWithOptions(cfg, httpClient, ClientOptions{})
+}
+
+func NewClientWithOptions(cfg Config, httpClient *http.Client, options ClientOptions) *Client {
+	if options.Timeout <= 0 {
+		options.Timeout = defaultHTTPTimeout
+	}
+	if options.RetryAttempts <= 0 {
+		options.RetryAttempts = defaultMessageRetryAttempts
+	}
+
 	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 10 * time.Second}
+		httpClient = &http.Client{Timeout: options.Timeout}
 	}
 
 	return &Client{
 		cfg:        cfg,
 		httpClient: httpClient,
+		options:    options,
 	}
 }
 
@@ -75,7 +96,7 @@ func (c *Client) SendText(ctx context.Context, text string) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	var lastErr error
-	for attempt := 0; attempt < defaultMessageRetryAttempts; attempt++ {
+	for attempt := 0; attempt < c.options.RetryAttempts; attempt++ {
 		resp, err := c.httpClient.Do(req.Clone(ctx))
 		if err != nil {
 			lastErr = fmt.Errorf("send qq notification: %w", err)

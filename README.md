@@ -4,6 +4,8 @@ A production-ready Go middleware for sending AI and automation notifications to 
 
 `qqnotify-go` is built for developers who want the fastest way to deliver results from Codex, AI agents, cron jobs, CI/CD pipelines, and internal tools to QQ.
 
+[![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
+
 ## Why qqnotify-go
 
 - Minimal setup to send the first message
@@ -32,7 +34,10 @@ func main() {
         log.Fatal(err)
     }
 
-    client := qqnotify.NewClient(cfg, nil)
+    client := qqnotify.NewClientWithOptions(cfg, nil, qqnotify.ClientOptions{
+        RetryAttempts: 3,
+        Timeout:       20 * time.Second,
+    })
     ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
     defer cancel()
 
@@ -71,6 +76,18 @@ Optional:
 - `QQ_BOT_API_BASE_URL`
 - `PORT` for `qqnotifyd`
 
+## Client Options
+
+Use `qqnotify.NewClientWithOptions` when you want to override default behavior:
+
+- `RetryAttempts`: number of send retries for transient 5xx upstream failures
+- `Timeout`: default HTTP client timeout used when `nil` client is provided
+
+Defaults:
+
+- `RetryAttempts = 2`
+- `Timeout = 10s`
+
 ## Quick Start
 
 Send a first message from Go:
@@ -97,6 +114,14 @@ Then call it:
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/notify `
   -ContentType 'application/json' `
   -Body '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
+```
+
+Or with `curl`:
+
+```bash
+curl -X POST http://127.0.0.1:8080/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Build finished","body":"CI completed successfully","status":"success"}'
 ```
 
 Health check:
