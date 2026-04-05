@@ -2,9 +2,9 @@
 
 # qqnotify-go
 
-A QQ notification middleware for AI and automation workflows.
+Send QQ notifications from Go, AI tools, and automation jobs.
 
-`qqnotify-go` helps Go apps, AI assistants, CI/CD jobs, cron tasks, and internal tools send results to QQ with minimal setup.
+`qqnotify-go` sends app results and job status updates to QQ.
 
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)

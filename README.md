@@ -2,9 +2,9 @@
 
 # qqnotify-go
 
-一个面向 AI 服务与自动化任务的 QQ 通知中间件。
+用 Go、AI 工具和自动化任务发送 QQ 通知。
 
-`qqnotify-go` 用来帮助 Go 程序、AI 助手、CI/CD、定时任务和内部工具，以较低心智负担把结果稳定发送到 QQ。
+`qqnotify-go` 可以把程序结果和任务状态直接发到 QQ。
 
 [![CI](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wangyaxings/qqnotify-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wangyaxings/qqnotify-go/qqnotify.svg)](https://pkg.go.dev/github.com/wangyaxings/qqnotify-go/qqnotify)
