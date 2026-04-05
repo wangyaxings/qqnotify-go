@@ -1,0 +1,53 @@
+package httpbridge
+
+import (
+	"bytes"
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
+
+type fakeSender struct {
+	lastText string
+	err      error
+}
+
+func (f *fakeSender) SendText(_ context.Context, text string) error {
+	f.lastText = text
+	return f.err
+}
+
+func TestHandlerAcceptsJSONAndSendsNotification(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{"title":"任务完成","body":"构建成功","status":"success"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 accepted, got %d", rec.Code)
+	}
+	if !strings.Contains(sender.lastText, "任务完成") {
+		t.Fatalf("expected sender to receive rendered text, got %q", sender.lastText)
+	}
+}
+
+func TestHandlerRejectsInvalidPayload(t *testing.T) {
+	sender := &fakeSender{}
+	handler := NewHandler(sender)
+
+	req := httptest.NewRequest(http.MethodPost, "/notify", bytes.NewBufferString(`{"title":"","body":""}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 bad request, got %d", rec.Code)
+	}
+}
