@@ -37,8 +37,13 @@ type accessTokenResponse struct {
 }
 
 type sendMessageRequest struct {
+	Content  string           `json:"content,omitempty"`
+	MsgType  int              `json:"msg_type"`
+	Markdown *markdownContent `json:"markdown,omitempty"`
+}
+
+type markdownContent struct {
 	Content string `json:"content"`
-	MsgType int    `json:"msg_type"`
 }
 
 type tokenErrorResponse struct {
@@ -79,15 +84,27 @@ func (c *Client) SendText(ctx context.Context, text string) error {
 		return errors.New("message content cannot be empty")
 	}
 
+	return c.sendMessage(ctx, sendMessageRequest{Content: text, MsgType: 0})
+}
+
+func (c *Client) SendMarkdown(ctx context.Context, content string) error {
+	content = strings.TrimSpace(content)
+	if content == "" {
+		return errors.New("message content cannot be empty")
+	}
+	return c.sendMessage(ctx, sendMessageRequest{
+		MsgType:  2,
+		Markdown: &markdownContent{Content: content},
+	})
+}
+
+func (c *Client) sendMessage(ctx context.Context, message sendMessageRequest) error {
 	accessToken, err := c.fetchAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	payload, err := json.Marshal(sendMessageRequest{
-		Content: text,
-		MsgType: 0,
-	})
+	payload, err := json.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("marshal message request: %w", err)
 	}

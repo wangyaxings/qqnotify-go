@@ -67,6 +67,41 @@ func TestClientSendTextRequestsAccessTokenAndMessage(t *testing.T) {
 	}
 }
 
+func TestClientSendMarkdownUsesQQMarkdownMessage(t *testing.T) {
+	var messageRequestBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch path.Clean(r.URL.Path) {
+		case "/app/getAppAccessToken":
+			_, _ = w.Write([]byte(`{"access_token":"test-access-token","expires_in":7200}`))
+		case "/v2/users/user-openid/messages":
+			messageRequestBody, _ = io.ReadAll(r.Body)
+			_, _ = w.Write([]byte(`{"id":"message-id"}`))
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{
+		AppID: "1903697734", AppSecret: "secret-value", UserOpenID: "user-openid",
+		TokenBaseURL: server.URL, APIBaseURL: server.URL,
+	}, server.Client())
+
+	if err := client.SendMarkdown(context.Background(), "### 待确认\n\n> 下一步：查看详情"); err != nil {
+		t.Fatalf("expected markdown send to succeed, got %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(messageRequestBody, &payload); err != nil {
+		t.Fatalf("expected valid message payload, got %v", err)
+	}
+	if payload["msg_type"] != float64(2) {
+		t.Fatalf("expected msg_type 2, got %#v", payload["msg_type"])
+	}
+	markdown, ok := payload["markdown"].(map[string]any)
+	if !ok || markdown["content"] != "### 待确认\n\n> 下一步：查看详情" {
+		t.Fatalf("expected markdown content, got %#v", payload["markdown"])
+	}
+}
+
 func TestClientSendTextRetriesOnTransientMessageFailure(t *testing.T) {
 	messageAttempts := 0
 

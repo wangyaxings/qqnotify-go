@@ -18,23 +18,34 @@ func RenderNotification(n Notification) string {
 	var lines []string
 
 	if title := strings.TrimSpace(n.Title); title != "" {
-		lines = append(lines, title)
+		lines = append(lines, "### "+title)
 	}
 	if body := strings.TrimSpace(n.Body); body != "" {
-		lines = append(lines, body)
-	}
-	if status := strings.TrimSpace(n.Status); status != "" {
-		lines = append(lines, "status: "+status)
-	}
-	if source := strings.TrimSpace(n.Source); source != "" {
-		lines = append(lines, "source: "+source)
-	}
-	if traceID := strings.TrimSpace(n.TraceID); traceID != "" {
-		lines = append(lines, "trace_id: "+traceID)
-	}
-	if !n.Timestamp.IsZero() {
-		lines = append(lines, "time: "+n.Timestamp.Format("2006-01-02 15:04:05"))
+		lines = append(lines, formatMarkdownBody(body))
 	}
 
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n\n")
+}
+
+func formatMarkdownBody(body string) string {
+	formatted := make([]string, 0, 4)
+	for _, raw := range strings.Split(body, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		label, value, found := strings.Cut(line, "：")
+		switch label {
+		case "集数", "结果", "原因", "状态":
+			if found {
+				line = "- **" + label + "**：" + strings.TrimSpace(value)
+			}
+		case "下一步":
+			if found {
+				line = "> **下一步**：" + strings.TrimSpace(value)
+			}
+		}
+		formatted = append(formatted, line)
+	}
+	return strings.Join(formatted, "\n")
 }

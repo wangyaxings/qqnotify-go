@@ -1,6 +1,7 @@
 package httpbridge
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -11,6 +12,10 @@ import (
 type Handler struct {
 	sender qqnotify.Sender
 	cfg    Config
+}
+
+type markdownSender interface {
+	SendMarkdown(context.Context, string) error
 }
 
 func NewHandler(sender qqnotify.Sender) http.Handler {
@@ -71,9 +76,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.sender.SendText(r.Context(), qqnotify.RenderNotification(payload)); err != nil {
+	rendered := qqnotify.RenderNotification(payload)
+	var sendErr error
+	if sender, ok := h.sender.(markdownSender); ok {
+		sendErr = sender.SendMarkdown(r.Context(), rendered)
+	} else {
+		sendErr = h.sender.SendText(r.Context(), rendered)
+	}
+	if sendErr != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]any{
-			"error": err.Error(),
+			"error": sendErr.Error(),
 		})
 		return
 	}

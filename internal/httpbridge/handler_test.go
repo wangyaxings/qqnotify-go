@@ -123,10 +123,9 @@ func TestHandlerBuildsCodexTemplatePayload(t *testing.T) {
 		t.Fatalf("expected 202 for codex template payload, got %d", rec.Code)
 	}
 	for _, want := range []string{
-		"Codex task finished",
-		"Task: Refactor bridge auth",
-		"Summary: All tests passed.",
-		"Files: internal/httpbridge/handler.go, README.md",
+		"### 代码任务完成",
+		"**任务**：Refactor bridge auth",
+		"All tests passed.",
 	} {
 		if !strings.Contains(sender.lastText, want) {
 			t.Fatalf("expected rendered text to contain %q, got %q", want, sender.lastText)
@@ -173,10 +172,9 @@ func TestHandlerBuildsCITemplatePayload(t *testing.T) {
 		t.Fatalf("expected 202 for ci template payload, got %d", rec.Code)
 	}
 	for _, want := range []string{
-		"CI workflow failed",
-		"Workflow: release",
-		"Job: build-linux",
-		"Run URL: https://github.com/example/repo/actions/runs/123",
+		"### 自动化检查失败",
+		"**流程**：release",
+		"[查看运行记录](https://github.com/example/repo/actions/runs/123)",
 	} {
 		if !strings.Contains(sender.lastText, want) {
 			t.Fatalf("expected rendered text to contain %q, got %q", want, sender.lastText)
@@ -203,14 +201,9 @@ func TestHandlerBuildsCronTemplatePayload(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("expected 202 for cron template payload, got %d", rec.Code)
 	}
-	for _, want := range []string{
-		"Cron job success",
-		"Job: daily-report",
-		"Schedule: 0 9 * * *",
-	} {
-		if !strings.Contains(sender.lastText, want) {
-			t.Fatalf("expected rendered text to contain %q, got %q", want, sender.lastText)
-		}
+	want := "### 定时任务完成\n\nThe report was generated successfully."
+	if sender.lastText != want {
+		t.Fatalf("expected compact cron markdown %q, got %q", want, sender.lastText)
 	}
 }
 

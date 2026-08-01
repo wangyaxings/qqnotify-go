@@ -1,7 +1,6 @@
 package qqnotify
 
 import (
-	"fmt"
 	"strings"
 	"time"
 )
@@ -37,17 +36,15 @@ type CronTemplate struct {
 func NewCodexNotification(t CodexTemplate) Notification {
 	var lines []string
 	if task := strings.TrimSpace(t.Task); task != "" {
-		lines = append(lines, "Task: "+task)
+		lines = append(lines, "**任务**："+task)
 	}
 	if summary := strings.TrimSpace(t.Summary); summary != "" {
-		lines = append(lines, "Summary: "+summary)
-	}
-	if len(t.Files) > 0 {
-		lines = append(lines, "Files: "+strings.Join(t.Files, ", "))
+		lines = append(lines, summary)
 	}
 
+	status := normalizeStatus(t.Status)
 	return Notification{
-		Title:     "Codex task finished",
+		Title:     statusTitle(status, "代码任务完成", "代码任务失败"),
 		Body:      strings.Join(lines, "\n"),
 		Status:    normalizeStatus(t.Status),
 		Source:    "codex",
@@ -59,21 +56,18 @@ func NewCodexNotification(t CodexTemplate) Notification {
 func NewCINotification(t CITemplate) Notification {
 	var lines []string
 	if workflow := strings.TrimSpace(t.Workflow); workflow != "" {
-		lines = append(lines, "Workflow: "+workflow)
-	}
-	if job := strings.TrimSpace(t.Job); job != "" {
-		lines = append(lines, "Job: "+job)
+		lines = append(lines, "**流程**："+workflow)
 	}
 	if summary := strings.TrimSpace(t.Summary); summary != "" {
-		lines = append(lines, "Summary: "+summary)
+		lines = append(lines, summary)
 	}
 	if runURL := strings.TrimSpace(t.RunURL); runURL != "" {
-		lines = append(lines, "Run URL: "+runURL)
+		lines = append(lines, "[查看运行记录]("+runURL+")")
 	}
 
 	status := normalizeStatus(t.Status)
 	return Notification{
-		Title:     fmt.Sprintf("CI workflow %s", status),
+		Title:     statusTitle(status, "自动化检查完成", "自动化检查失败"),
 		Body:      strings.Join(lines, "\n"),
 		Status:    status,
 		Source:    "github-actions",
@@ -84,25 +78,27 @@ func NewCINotification(t CITemplate) Notification {
 
 func NewCronNotification(t CronTemplate) Notification {
 	var lines []string
-	if name := strings.TrimSpace(t.Name); name != "" {
-		lines = append(lines, "Job: "+name)
-	}
-	if scheduled := strings.TrimSpace(t.Scheduled); scheduled != "" {
-		lines = append(lines, "Schedule: "+scheduled)
-	}
 	if summary := strings.TrimSpace(t.Summary); summary != "" {
-		lines = append(lines, "Summary: "+summary)
+		lines = append(lines, summary)
 	}
 
 	status := normalizeStatus(t.Status)
 	return Notification{
-		Title:     fmt.Sprintf("Cron job %s", status),
+		Title:     statusTitle(status, "定时任务完成", "定时任务异常"),
 		Body:      strings.Join(lines, "\n"),
 		Status:    status,
 		Source:    "cron",
 		TraceID:   strings.TrimSpace(t.TraceID),
 		Timestamp: t.Timestamp,
 	}
+}
+
+func statusTitle(status, success, failure string) string {
+	normalized := strings.ToLower(strings.TrimSpace(status))
+	if strings.Contains(normalized, "fail") || strings.Contains(normalized, "error") {
+		return failure
+	}
+	return success
 }
 
 func normalizeStatus(status string) string {

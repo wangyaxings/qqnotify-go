@@ -16,13 +16,12 @@ func TestNewCodexNotificationBuildsStructuredMessage(t *testing.T) {
 		Timestamp: time.Date(2026, 4, 5, 16, 30, 0, 0, time.FixedZone("CST", 8*3600)),
 	})
 
-	if n.Title != "Codex task finished" {
+	if n.Title != "代码任务完成" {
 		t.Fatalf("expected codex title, got %q", n.Title)
 	}
 	for _, want := range []string{
-		"Task: Refactor notification bridge",
-		"Summary: All tests passed and the patch is ready.",
-		"Files: internal/httpbridge/handler.go, README.md",
+		"**任务**：Refactor notification bridge",
+		"All tests passed and the patch is ready.",
 	} {
 		if !strings.Contains(n.Body, want) {
 			t.Fatalf("expected body to contain %q, got %q", want, n.Body)
@@ -43,14 +42,13 @@ func TestNewCINotificationBuildsStructuredMessage(t *testing.T) {
 		TraceID:  "run-123",
 	})
 
-	if n.Title != "CI workflow failed" {
+	if n.Title != "自动化检查失败" {
 		t.Fatalf("expected ci title, got %q", n.Title)
 	}
 	for _, want := range []string{
-		"Workflow: release",
-		"Job: build-linux",
-		"Summary: Unit tests failed in package qqnotify.",
-		"Run URL: https://github.com/example/repo/actions/runs/123",
+		"**流程**：release",
+		"Unit tests failed in package qqnotify.",
+		"[查看运行记录](https://github.com/example/repo/actions/runs/123)",
 	} {
 		if !strings.Contains(n.Body, want) {
 			t.Fatalf("expected body to contain %q, got %q", want, n.Body)
@@ -70,16 +68,15 @@ func TestNewCronNotificationBuildsStructuredMessage(t *testing.T) {
 		TraceID:   "cron-001",
 	})
 
-	if n.Title != "Cron job success" {
+	if n.Title != "定时任务完成" {
 		t.Fatalf("expected cron title, got %q", n.Title)
 	}
-	for _, want := range []string{
-		"Job: daily-report",
-		"Schedule: 0 9 * * *",
-		"Summary: The daily report was generated successfully.",
-	} {
-		if !strings.Contains(n.Body, want) {
-			t.Fatalf("expected body to contain %q, got %q", want, n.Body)
+	if n.Body != "The daily report was generated successfully." {
+		t.Fatalf("expected summary-only cron body, got %q", n.Body)
+	}
+	for _, unwanted := range []string{"Cron", "Job", "Schedule", "daily-report", "0 9 * * *"} {
+		if strings.Contains(n.Title+"\n"+n.Body, unwanted) {
+			t.Fatalf("expected cron output to omit %q, got title=%q body=%q", unwanted, n.Title, n.Body)
 		}
 	}
 	if n.Source != "cron" {

@@ -1,31 +1,22 @@
 package qqnotify
 
 import (
-	"strings"
 	"testing"
 	"time"
 )
 
 func TestRenderNotificationIncludesKeyFields(t *testing.T) {
 	text := RenderNotification(Notification{
-		Title:     "任务完成",
-		Body:      "Codex 已完成代码修改并通过测试",
+		Title:     "待确认",
+		Body:      "集数：第 1 集\n结果：发现 2 个候选\n下一步：在订阅详情中确认",
 		Status:    "success",
 		Source:    "codex",
 		TraceID:   "job-123",
 		Timestamp: time.Date(2026, 4, 5, 14, 30, 0, 0, time.FixedZone("CST", 8*3600)),
 	})
 
-	for _, want := range []string{
-		"任务完成",
-		"Codex 已完成代码修改并通过测试",
-		"success",
-		"codex",
-		"job-123",
-		"2026-04-05 14:30:00",
-	} {
-		if !strings.Contains(text, want) {
-			t.Fatalf("expected rendered text to contain %q, got %q", want, text)
-		}
+	want := "### 待确认\n\n- **集数**：第 1 集\n- **结果**：发现 2 个候选\n> **下一步**：在订阅详情中确认"
+	if text != want {
+		t.Fatalf("expected compact markdown %q, got %q", want, text)
 	}
 }
